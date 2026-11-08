@@ -1,14 +1,10 @@
 import { prisma } from "../../lib/prisma.js"
+import { ErrorDuplicado } from "../../utils/erroresPersonalizados.js"
+
 
 export const obtenerTodosLibros = async () => {
-
     const libros = await prisma.libro.findMany()
-
-    if (libros.length === 0) {
-        throw new Error("No se pudieron obtener todos los libros")
-    }
-
-    return libros
+    return { data: libros }
 }
 
 export const obtenerLibrosPorTitulo = async (titulo: string) => {
@@ -17,11 +13,8 @@ export const obtenerLibrosPorTitulo = async (titulo: string) => {
         where: { titulo: titulo }
     })
 
-    if (libros.length === 0) {
-        throw new Error("No se encontró ninguna coincidencia.")
-    }
+    return { data: libros }
 
-    return libros
 }
 
 export const obtenerLibrosPorAutor = async (autor: string) => {
@@ -31,31 +24,58 @@ export const obtenerLibrosPorAutor = async (autor: string) => {
         include: { autor: true },
     })
 
-    if (!libros) {
-        throw new Error("No se encontró ninguna coincidencia.")
-    }
+    return { data: libros }
+}
+
+const obtenerLibrosPorCoincidencia = async (
+    titulo: string,
+    anio: number,
+    autor_id: number,
+) => {
+
+    const libros = await prisma.libro.findFirst({
+        where: {
+            titulo: { equals: titulo.trim(), mode: "insensitive" },
+            anio: anio,
+            autor_id: autor_id
+        }
+    })
 
     return libros
+
 }
 
 
-// export const crearLibro = async (
-//     titulo: string,
-//     anio: number,
-//     descripcion: string,
-//     autor_id: number,
-//     categoria_id: number
-// ) => {
+export const crearLibro = async (
+    titulo: string,
+    anio: number,
+    descripcion: string | null,
+    autor_id: number,
+    categoria_id: number
+) => {
 
-//     const nuevoLibro = await prisma.libro.create({
-//         data: {
-//             titulo, anio, descripcion, autor_id, categoria_id
-//         }
-//     })
+    const existe = await obtenerLibrosPorCoincidencia(titulo.trim(), anio, autor_id)
 
-//     if (!nuevoLibro) {
-//         throw new Error("No se pudo crear este nuevo libro.")
-//     }
+    if (existe) {
+        throw new ErrorDuplicado("Ya existe un libro con ese titulo, autor y año de publicacion.")
+    }
 
-//     return nuevoLibro
-// }
+    titulo = titulo.trim()
+    descripcion = descripcion === null ? null : descripcion?.trim()
+
+    const nuevoLibro = await prisma.libro.create({
+        data: {
+            titulo,
+            anio,
+            descripcion,
+            autor_id,
+            categoria_id
+        }
+    })
+
+    return { data: nuevoLibro }
+}
+
+export const actualizarLibro = async (id: number) => {
+
+}
