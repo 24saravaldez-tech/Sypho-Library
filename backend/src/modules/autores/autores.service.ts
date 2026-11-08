@@ -16,10 +16,4 @@ export const obtenerUnAutor = async (nombre : string) => {
     const autor = await prisma.autor.findMany({
         where: {nombre: nombre}
     })
-
-    if (!autor) {
-        throw new Error("No se pudo obtener al autor buscado")
-    }
-
-    return autor
 }

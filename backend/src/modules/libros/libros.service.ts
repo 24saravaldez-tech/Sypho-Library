@@ -1,4 +1,4 @@
-import type { Prisma } from "../../../generated/prisma/browser.js"
+import type { Prisma } from "../../../generated/prisma/client.js"
 import { prisma } from "../../lib/prisma.js"
 import { ErrorDuplicado, ErrorNoEncontrado } from "../../utils/erroresPersonalizados.js"
 
@@ -105,7 +105,7 @@ export const obtenerTodosLibros = async (
 
         prisma.libro.findMany({ //libros
             where, //el objeto where que antes se lleno con todos los datos que queremos filtrar
-            include: { autor: true }, //para que incluya los datos del autor
+          //  include: { autor: true }, //para que incluya los datos del autor
             orderBy: [{ [ordenarPor]: orden }, { titulo: "asc" }], //lo habiamos usado antes pero no sabia o recordaba como se llamaba. esto es una LLAVE CALCULADA. Javascript usa el valor des la variable como nombre de la propiedad. En este caso, como existe 'titulo', 'anio', o 'categoria_id'. Bastante util para evitar ifs que decidan el valor de la propiedad
             skip: (pagina - 1) * limite, //cuantos registros (lirbos en este caso) se va a saltar. En sequelize es el equivalente al offset
             take: limite, //take es el limit en sequelize, lo que nos dice de cuantos en cuantos traera los librosS
@@ -117,14 +117,6 @@ export const obtenerTodosLibros = async (
     return { data: libros, total, pagina, limite } //va a retornar los libros encontrados, el total encontrado, la pagina donde se esta y el limite que maneja
 }
 
-export const obtenerLibroPorTitulo = async (titulo: string) => {
-
-    const libros = await prisma.libro.findFirst({
-        where: { titulo: titulo }
-    })
-
-    return { data: libros }
-}
 
 export const obtenerLibroPOrId = async (id: number) => {
 
@@ -133,16 +125,6 @@ export const obtenerLibroPOrId = async (id: number) => {
     })
 
     return { data: libro }
-}
-
-export const obtenerLibrosPorAutor = async (autor: string) => {
-
-    const libros = await prisma.libro.findMany({
-        where: { autor: { nombre: autor } }, // primsa lo comprende y filtra automaticamente los resultados por nombre de autor segun la relacion que tiene con libros
-        include: { autor: true },
-    })
-
-    return { data: libros }
 }
 
 const obtenerLibrosPorCoincidencia = async (
@@ -162,7 +144,6 @@ const obtenerLibrosPorCoincidencia = async (
     return libros
 
 }
-
 
 export const crearLibro = async (
     titulo: string,
@@ -210,7 +191,7 @@ export const actualizarLibro = async (
 
     const existe = await obtenerLibrosPorCoincidencia(titulo.trim(), anio, autor_id)
 
-    if (existe?.id !== id) {
+    if (existe?.id !== id && id !== undefined) {
         throw new ErrorDuplicado("Ya existe un libro con ese titulo, autor y año de publicacion.")
     }
 

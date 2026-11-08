@@ -19,3 +19,9 @@ export class ErrorNoEncontrado extends AppError {
         super(message, 404)
     }
 }
+
+export class IdMalFormado extends AppError {
+    constructor(message: string) {
+        super(message, 400)
+    }
+}

@@ -1,16 +1,17 @@
 export const successResponse = (data: any, message: string = "Operación exitosa") => {
-    return { success: true, message, data };
+    return {
+        success: true,
+        message: message || "Operacion exitosa",
+        data
+    }
 };
 
 export const errorResponse = (error: unknown, errors = null) => {
-    if (error instanceof Error) {
-        const message = error.message || "Ocurrió un error en el servidor";
-        return { success: false, message, errors };
-    }
-
-    if (typeof error === 'string') {
-        const message = error || "Ocurrió un error en el servidor";
-        return { success: false, message, errors };
+    const mensaje = error instanceof Error ? error.message : typeof error === "string" ? error : ""
+    return {
+        success: false,
+        message: mensaje || "Ocurrió un error en el servidor",
+        errors,
     }
 
 }
