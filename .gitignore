@@ -1,2 +1,9 @@
 # Excluir archivos ZIP del repositorio.
 *.[zZ][iI][pP]
+
+# Dependencias y variables de entorno del backend.
+/backend/**/node_modules
+/backend/**/.env
+
+# Cliente generado por Prisma.
+/backend/generated/prisma/
