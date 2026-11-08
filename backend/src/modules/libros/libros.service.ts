@@ -1,5 +1,5 @@
 import { prisma } from "../../lib/prisma.js"
-import { ErrorDuplicado } from "../../utils/erroresPersonalizados.js"
+import { ErrorDuplicado, ErrorNoEncontrado } from "../../utils/erroresPersonalizados.js"
 
 
 export const obtenerTodosLibros = async () => {
@@ -7,14 +7,22 @@ export const obtenerTodosLibros = async () => {
     return { data: libros }
 }
 
-export const obtenerLibrosPorTitulo = async (titulo: string) => {
+export const obtenerLibroPorTitulo = async (titulo: string) => {
 
-    const libros = await prisma.libro.findMany({
+    const libros = await prisma.libro.findFirst({
         where: { titulo: titulo }
     })
 
     return { data: libros }
+}
 
+export const obtenerLibroPOrId = async (id: number) => {
+
+    const libro = await prisma.libro.findUnique({
+        where: { id: id }
+    })
+
+    return { data: libro }
 }
 
 export const obtenerLibrosPorAutor = async (autor: string) => {
@@ -54,20 +62,20 @@ export const crearLibro = async (
     categoria_id: number
 ) => {
 
-    const existe = await obtenerLibrosPorCoincidencia(titulo.trim(), anio, autor_id)
+    const tituloLimpio: string = titulo.trim()
+    const descripcionLimpia = descripcion === null ? null : descripcion?.trim()
+
+    const existe = await obtenerLibrosPorCoincidencia(tituloLimpio, anio, autor_id)
 
     if (existe) {
         throw new ErrorDuplicado("Ya existe un libro con ese titulo, autor y año de publicacion.")
     }
 
-    titulo = titulo.trim()
-    descripcion = descripcion === null ? null : descripcion?.trim()
-
     const nuevoLibro = await prisma.libro.create({
         data: {
-            titulo,
+            titulo: tituloLimpio,
             anio,
-            descripcion,
+            descripcion: descripcionLimpia,
             autor_id,
             categoria_id
         }
@@ -76,6 +84,57 @@ export const crearLibro = async (
     return { data: nuevoLibro }
 }
 
-export const actualizarLibro = async (id: number) => {
+export const actualizarLibro = async (
+    id: number,
+    titulo: string,
+    anio: number,
+    descripcion: string | null,
+    autor_id: number,
+    categoria_id: number
+) => {
+    const libroAEditarID = await obtenerLibroPOrId(id)
+
+    if (libroAEditarID.data === null) {
+        throw new ErrorNoEncontrado("No se encontro el libro que quieres editar")
+    }
+
+    const existe = await obtenerLibrosPorCoincidencia(titulo.trim(), anio, autor_id)
+
+    if (existe?.id !== id) {
+        throw new ErrorDuplicado("Ya existe un libro con ese titulo, autor y año de publicacion.")
+    }
+
+    const tituloLimpio: string = titulo.trim()
+    const descripcionLimpia = descripcion === null ? null : descripcion?.trim()
+
+    const libroEditado = await prisma.libro.update({
+        where: { id: id },
+        data: {
+            titulo: tituloLimpio,
+            anio: anio,
+            descripcion: descripcionLimpia,
+            autor_id: autor_id,
+            categoria_id: categoria_id
+        }
+    })
+
+    return { data: libroEditado }
+}
+
+
+export const eliminarLibro = async (id: number) => {
+
+    const libroEliminar = await obtenerLibroPOrId(id)
+
+    if (libroEliminar.data === null) {
+        throw new ErrorNoEncontrado("No se encontró el libro que desea eliminar.")
+    }
+
+    const libroEliminado = await prisma.libro.delete({
+        where: { id: id }
+    })
+
+    return { data: libroEliminado }
 
 }
+
