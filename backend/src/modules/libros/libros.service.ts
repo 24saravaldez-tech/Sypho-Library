@@ -4,7 +4,6 @@ import { ErrorDuplicado, ErrorNoEncontrado } from "../../utils/erroresPersonaliz
 
 export type FiltrosLibros = {
     titulo?: string | undefined
-
     categoria_id?: number | undefined
     anio?: number | undefined
     anioMin?: number | undefined
@@ -60,11 +59,11 @@ export const obtenerTodosLibros = async (
 
     const [libros, total] = await prisma.$transaction([
 
-        prisma.libro.findMany({ 
+        prisma.libro.findMany({
             where, 
-            orderBy: [{ [ordenarPor]: orden }, { titulo: "asc" }], 
-            skip: (pagina - 1) * limite,
-            take: limite,
+            orderBy: [{ [ordenarPor]: orden }], 
+            skip: (pagina - 1) * limite, 
+            take: limite, 
         }),
         prisma.libro.count({ where }), 
     ])

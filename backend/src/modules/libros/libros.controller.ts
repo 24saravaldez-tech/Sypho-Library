@@ -1,7 +1,7 @@
 import { type Request, type Response } from "express";
 import { actualizarLibro, crearLibro, eliminarLibro, obtenerLibroPOrId, obtenerTodosLibros } from "./libros.service.js";
 import { successResponse } from "../../utils/response.utils.js";
-import {IdMalFormado } from "../../utils/erroresPersonalizados.js";
+import { IdMalFormado } from "../../utils/erroresPersonalizados.js";
 
 const validarTexto = (valor: unknown): string | undefined => {
     if (typeof valor !== "string" || valor.trim() === "") {
@@ -24,8 +24,8 @@ export const LibrosController = {
 
     async obtenerTodosLibros(req: Request, res: Response) {
 
-        const pagina = validarNumero(req.query.pagina) ?? 1 
-        const limite = validarNumero(req.query.limite) ?? 10 
+        const pagina = validarNumero(req.query.pagina) ?? 1
+        const limite = validarNumero(req.query.limite) ?? 10
         const orden = req.query.orden === "desc" ? "desc" : "asc"
         const ordenarPor = req.query.ordenarPor === "anio" ? "anio" : req.query.ordenarPor === "titulo" ? "titulo" : "categoria_id"
 
