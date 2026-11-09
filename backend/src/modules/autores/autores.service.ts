@@ -1,19 +1,135 @@
 import { prisma } from "../../lib/prisma.js"
+import type { Prisma } from "../../../generated/prisma/client.js"
+import { ErrorDuplicado, ErrorNoEncontrado } from "../../utils/erroresPersonalizados.js"
 
-export const obtenerTodosAutores = async () => {
+export type FiltrosAutores = {
+    nombre?: string | undefined
+    ordenarPor: "nombre"
+    orden: "asc" | "desc"
+    pagina: number
+    limite: number
+}
 
-    const autores = await prisma.autor.findMany()
 
-    if (!autores) {
-        throw new Error("No se pudieron obtener todos los autores registrados.")
+export const obtenerTodosAutores = async (filtros: FiltrosAutores) => {
+    const {
+        nombre,
+        ordenarPor,
+        orden,
+        pagina,
+        limite
+    } = filtros
+
+
+    const where: Prisma.autorWhereInput = {}
+
+    if (nombre) {
+        where.nombre = {
+            contains: nombre.trim(), mode: "insensitive"
+        }
     }
 
-    return autores
+    const [autores, total] = await prisma.$transaction([
+        prisma.autor.findMany({
+            where,
+            orderBy: [{ [ordenarPor]: orden }, { nombre: "asc" }],
+            skip: (pagina - 1) * limite,
+            take: limite,
+            include: {libro: true}
+        }),
+        prisma.autor.count({ where }),
+    ])
+
+    return { data: autores, total, pagina, limite }
+
 }
 
-export const obtenerUnAutor = async (nombre : string) => {
+export const obtenerAutorPorId = async (id: number) => {
 
-    const autor = await prisma.autor.findMany({
-        where: {nombre: nombre}
+    const autores = await prisma.autor.findMany({
+        where: { id: id }
     })
+
+    return { data: autores }
 }
+
+const obtenerAutorPorCoincidencia = async (
+    nombre: string,
+    detalles: string | null,
+) => {
+
+    const autor = await prisma.autor.findFirst({
+        where: {
+            nombre: { equals: nombre, mode: "insensitive" },
+            detalles: { equals: detalles, mode: "insensitive" }
+        }
+    })
+
+    return autor
+}
+
+
+export const crearAutor = async (
+    nombre: string,
+    detalles: string | null,
+) => {
+    const existe = await obtenerAutorPorCoincidencia(nombre, detalles)
+
+    if (existe) {
+        throw new ErrorDuplicado("Ya existe un autor con el mismo nombre y la misma descripcion.")
+    }
+
+    const nuevoAutor = await prisma.autor.create({
+        data: {
+            nombre: nombre,
+            detalles: detalles
+        }
+    })
+
+    return { data: nuevoAutor }
+}
+
+export const actualizarAutor = async (
+    id: number,
+    nombre: string,
+    detalles: string | null,
+) => {
+    const buscarAutor = await obtenerAutorPorId(id)
+
+    if (buscarAutor.data === null) {
+        throw new ErrorNoEncontrado("No se encontro el autor que quieres editar")
+    }
+
+    const existe = await obtenerAutorPorCoincidencia(nombre, detalles)
+
+    if (existe?.id !== id && id !== undefined) {
+        throw new ErrorDuplicado("Ya existe un autor con el mismo nombre y la misma descripcion.")
+    }
+
+    const autorEditado = await prisma.autor.update({
+        where: { id: id },
+        data: {
+            nombre: nombre,
+            detalles: detalles
+        }
+    })
+
+    return { data: autorEditado }
+}
+
+
+export const eliminarAutor = async (id: number) => {
+
+    const autorAEliminar = await obtenerAutorPorId(id)
+
+    if (autorAEliminar.data === null) {
+        throw new ErrorNoEncontrado("No se encontró el autor que desea eliminar.")
+    }
+
+    const autorEliminado = await prisma.autor.delete({
+        where: { id: id }
+    })
+
+    return { data: autorEliminado }
+}
+

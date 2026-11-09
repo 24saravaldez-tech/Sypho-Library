@@ -106,7 +106,7 @@ export const obtenerTodosLibros = async (
         prisma.libro.findMany({ //libros
             where, //el objeto where que antes se lleno con todos los datos que queremos filtrar
           //  include: { autor: true }, //para que incluya los datos del autor
-            orderBy: [{ [ordenarPor]: orden }, { titulo: "asc" }], //lo habiamos usado antes pero no sabia o recordaba como se llamaba. esto es una LLAVE CALCULADA. Javascript usa el valor des la variable como nombre de la propiedad. En este caso, como existe 'titulo', 'anio', o 'categoria_id'. Bastante util para evitar ifs que decidan el valor de la propiedad
+            orderBy: [{ [ordenarPor]: orden }], //lo habiamos usado antes pero no sabia o recordaba como se llamaba. esto es una LLAVE CALCULADA. Javascript usa el valor des la variable como nombre de la propiedad. En este caso, como existe 'titulo', 'anio', o 'categoria_id'. Bastante util para evitar ifs que decidan el valor de la propiedad
             skip: (pagina - 1) * limite, //cuantos registros (lirbos en este caso) se va a saltar. En sequelize es el equivalente al offset
             take: limite, //take es el limit en sequelize, lo que nos dice de cuantos en cuantos traera los librosS
         }),

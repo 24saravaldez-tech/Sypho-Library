@@ -3,6 +3,16 @@ import { actualizarLibro, crearLibro, eliminarLibro, obtenerLibroPOrId, obtenerT
 import { errorResponse, successResponse } from "../../utils/response.utils.js";
 import { AppError, IdMalFormado } from "../../utils/erroresPersonalizados.js";
 
+//tengo plan de ataque: 
+//1. Modificar la tabla de libros y crear una nueva que se llame Tipo_Lectura
+//2. La modificacion de libros sera para que tenga fecha de creacion, edicion. Fecha de inicio de lectura y de finalizacion de lectura
+//  tambien un apartado para su propia calificacion 0/5 estrellas, un "separador" donde si quiere puede anotar en que pagina se quedo.
+//  los detalles del libro, al consultarlo, deben traer todo esto.
+//3. Un libro si se puede eliminar pero un autor con libros no, lo mismo para una categoria que contenga libros.
+//4. La tabla de Tipo_Lectura sera para marcar si fue lectura normar (Fisico o digital) o audiolibro. Y lo del separador podria
+//   ser un numero de pagina o minuto en el que se quedo de escucha.
+// 5. Y me falta investigar como calajos se pueden guardar imagenes en una base de datos
+
 //esta no fue idea mia sino de Claudio, pero ayuda: en lugar de repetir 
 //las mismas validaciones para saber si si es un texto limpio o un numero entero y no letras u otra cosa
 //mejor hacer dos funciones que lo validen y poder reutilizarlas las veces que sean necesarias
