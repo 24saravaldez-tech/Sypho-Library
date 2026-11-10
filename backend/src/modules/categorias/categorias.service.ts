@@ -1,6 +1,6 @@
 import { prisma } from "../../lib/prisma.js"
 import type { Prisma } from "../../../generated/prisma/client.js"
-import { ErrorDuplicado, ErrorNoEncontrado } from "../../utils/erroresPersonalizados.js"
+import { ErrorDuplicado, ErrorNoEncontrado, ErrorConflicto } from "../../utils/erroresPersonalizados.js"
 
 
 export type FiltrosCategorias = {
@@ -33,7 +33,10 @@ export const obtenerTodasLasCategorias = async (filtros: FiltrosCategorias) => {
     const [categorias, total] = await prisma.$transaction([
         prisma.categoria.findMany({
             where,
-            orderBy: [{ [ordenarPor]: orden }, { nombre: "asc" }],
+            orderBy: [
+                { [ordenarPor]: orden },
+                { id: "asc" }
+            ],
             skip: (pagina - 1) * limite,
             take: limite,
         }),
@@ -46,10 +49,13 @@ export const obtenerTodasLasCategorias = async (filtros: FiltrosCategorias) => {
 
 export const obtenerCategoriaPorId = async (id: number) => {
 
-    const categorias = await prisma.categoria.findMany({
+    const categorias = await prisma.categoria.findUnique({
         where: { id: id }
     })
 
+    if (!categorias) {
+        throw new ErrorNoEncontrado("No se encontro categoria con ese id.")
+    }
     return { data: categorias }
 }
 
@@ -97,7 +103,7 @@ export const actualizarCategoria = async (
 
     const existe = await obtenerCategoriaPorCoincidencia(nombre)
 
-    if (existe?.id !== id && id !== undefined) {
+    if (existe && existe.id !== id) {
         throw new ErrorDuplicado("Ya existe una categoria con el mismo nombre.")
     }
 
@@ -120,6 +126,11 @@ export const eliminarCategoria = async (id: number) => {
         throw new ErrorNoEncontrado("No se encontró la categoria que desea eliminar.")
     }
 
+    const libros = await prisma.libro.count({ where: { categoria_id: id } })
+
+    if (libros > 0) {
+        throw new ErrorConflicto("No se puede eliminar categoria porque tiene libros asociados.")
+    }
     const categoriaEliminada = await prisma.categoria.delete({
         where: { id: id }
     })

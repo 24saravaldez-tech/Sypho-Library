@@ -12,7 +12,7 @@ export const AutoresController = {
 
         const pagina = validarNumero(req.query.pagina) ?? 1
         const limite = validarNumero(req.query.limite) ?? 10
-        const nombreLimipio = validarTexto(req.query.titulo)
+        const nombreLimipio = validarTexto(req.query.nombre)
         const orden = req.query.orden === "desc" ? "desc" : "asc"
         const ordenarPor = req.query.ordenarPor === "nombre" ? "nombre" : "nombre"
 
@@ -39,14 +39,15 @@ export const AutoresController = {
     },
 
     async crearAutor(req: Request, res: Response) {
-        const { nombre, descripcion } = req.body
+        const { nombre, descripcion = null } = req.body
         const nombreLimipio = validarTexto(nombre)
 
         if (typeof nombreLimipio === "string") {
             const nuevoAutor = await crearAutor(nombreLimipio, descripcion)
             return res.status(201).json(successResponse(nuevoAutor, "Se creo un nuevo autor exitosamente"));
         }
-
+        // Antes faltaba responder si nombre no era texto, y Postman se quedaba pensando.
+        throw new IdMalFormado("El nombre del autor debe ser un texto no vacio.")
 
     },
 
@@ -57,10 +58,10 @@ export const AutoresController = {
         if (typeof idValidado === "undefined") {
             throw new IdMalFormado(mensajeId)
         }
-        const { nombre, descripcion } = req.body
+        const { nombre, descripcion = null } = req.body
 
         const nuevoLibro = await actualizarAutor(idValidado, nombre, descripcion)
-        return res.status(200).json(successResponse(nuevoLibro, "Se creo un nuevo libro exitosamente"));
+        return res.status(200).json(successResponse(nuevoLibro, "Se actualizo el autor exitosamente"));
 
     },
 

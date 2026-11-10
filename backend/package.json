@@ -4,8 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx watch src/service.ts"
+    "test": "node --import tsx --test test/*.test.ts",
+    "dev": "tsx watch src/service.ts",
+    "typecheck": "tsc --noEmit",
+    "prisma:validate": "prisma validate --config prisma7.config.ts",
+    "prisma:generate": "prisma generate --config prisma7.config.ts",
+    "db:comparar": "prisma migrate diff --config prisma7.config.ts --from-config-datasource --to-schema prisma/baseline.prisma --exit-code",
+    "db:estado": "prisma migrate status --config prisma7.config.ts"
   },
   "keywords": [],
   "author": "",

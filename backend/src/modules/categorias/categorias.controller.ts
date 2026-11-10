@@ -12,7 +12,7 @@ export const CategoriasController = {
 
         const pagina = validarNumero(req.query.pagina) ?? 1
         const limite = validarNumero(req.query.limite) ?? 10
-        const nombreLimipio = validarTexto(req.query.titulo)
+        const nombreLimipio = validarTexto(req.query.nombre)
         const orden = req.query.orden === "desc" ? "desc" : "asc"
         const ordenarPor = req.query.ordenarPor === "nombre" ? "nombre" : "nombre"
 
@@ -47,6 +47,7 @@ export const CategoriasController = {
             return res.status(201).json(successResponse(nuevoAutor, "Se creo una nueva categoria exitosamente"));
         }
 
+        throw new IdMalFormado("El nombre de la categoria debe ser un texto no vacio.")
 
     },
 
@@ -60,7 +61,7 @@ export const CategoriasController = {
         const { nombre } = req.body
 
         const nuevoLibro = await actualizarCategoria(idValidado, nombre)
-        return res.status(200).json(successResponse(nuevoLibro, "Se creo una nueva categoria exitosamente"));
+        return res.status(200).json(successResponse(nuevoLibro, "Se actualizo la categoria exitosamente"));
 
     },
 

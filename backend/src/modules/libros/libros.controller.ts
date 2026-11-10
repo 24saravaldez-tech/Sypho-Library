@@ -13,6 +13,7 @@ import { AppError, IdMalFormado } from "../../utils/erroresPersonalizados.js";
 //   ser un numero de pagina o minuto en el que se quedo de escucha.
 // 5. Y me falta investigar como calajos se pueden guardar imagenes en una base de datos
 
+
 //esta no fue idea mia sino de Claudio, pero ayuda: en lugar de repetir 
 //las mismas validaciones para saber si si es un texto limpio o un numero entero y no letras u otra cosa
 //mejor hacer dos funciones que lo validen y poder reutilizarlas las veces que sean necesarias
@@ -49,7 +50,9 @@ export const LibrosController = {
         const totalLibros = await obtenerTodosLibros({
             titulo: validarTexto(req.query.titulo),
             anio: validarNumero(req.query.anio),
-            //  autor: validarNumero(req.query.autor_id),
+            anioMin: validarNumero(req.query.anioMin),
+            anioMax: validarNumero(req.query.anioMax),
+            autor: validarTexto(req.query.autor),
             categoria_id: validarNumero(req.query.categoria_id),
             ordenarPor,
             orden,
@@ -73,9 +76,39 @@ export const LibrosController = {
     },
 
     async crearLibro(req: Request, res: Response) {
-        const { titulo, anio, descripcion = null, autor_id, categoria_id } = req.body
+        const {
+            titulo,
+            anio,
+            descripcion = null,
+            autor_id,
+            categoria_id,
+            tipo_lectura_id,
+            estado,
+            inicio_lectura,
+            fin_lectura,
+            calificacion,
+            pagina_actual,
+            segundo_actual,
+            resena,
+            portada_url
+        } = req.body
 
-        const nuevoLibro = await crearLibro(titulo, anio, descripcion, autor_id, categoria_id)
+        const nuevoLibro = await crearLibro({
+            titulo,
+            anio,
+            descripcion,
+            autor_id,
+            categoria_id,
+            tipo_lectura_id,
+            estado,
+            calificacion,
+            pagina_actual,
+            segundo_actual,
+            resena,
+            portada_url,
+            inicio_lectura: inicio_lectura == null ? inicio_lectura : new Date(inicio_lectura),
+            fin_lectura: fin_lectura == null ? fin_lectura : new Date(fin_lectura),
+        })
         return res.status(201).json(successResponse(nuevoLibro, "Se creo un nuevo libro exitosamente"));
     },
 
@@ -88,8 +121,42 @@ export const LibrosController = {
         }
 
         const { titulo, anio, descripcion = null, autor_id, categoria_id } = req.body
-        const nuevoLibro = await actualizarLibro(idValidado, titulo, anio, descripcion, autor_id, categoria_id)
-        return res.status(200).json(successResponse(nuevoLibro, "Se creo un nuevo libro exitosamente"));
+
+        //me da mucha dinorabia tener que estar repite y repite (otra vez la burra al trigo)
+        //todos estos datos. Voy a investigar la manera -ma;ana- de no tener que hacerlo.
+        //tener una clase o asi, para reutilizarla
+
+        const { tipo_lectura_id,
+            estado,
+            inicio_lectura,
+            fin_lectura,
+            calificacion,
+            pagina_actual,
+            segundo_actual,
+            resena,
+            portada_url
+        } = req.body
+
+        const nuevoLibro = await actualizarLibro(
+            idValidado,
+            titulo,
+            anio,
+            descripcion,
+            autor_id,
+            categoria_id,
+            {
+                tipo_lectura_id,
+                estado,
+                calificacion,
+                pagina_actual,
+                segundo_actual,
+                resena,
+                portada_url,
+                inicio_lectura: inicio_lectura == null ? inicio_lectura : new Date(inicio_lectura),
+                fin_lectura: fin_lectura == null ? fin_lectura : new Date(fin_lectura),
+            }
+        )
+        return res.status(200).json(successResponse(nuevoLibro, "Se actualizo el libro exitosamente"));
 
     },
 

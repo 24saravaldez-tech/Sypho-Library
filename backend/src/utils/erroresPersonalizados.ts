@@ -25,3 +25,7 @@ export class IdMalFormado extends AppError {
         super(message, 400)
     }
 }
+
+export class ErrorConflicto extends AppError {
+    constructor(message: string) { super(message, 409) }
+}

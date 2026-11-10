@@ -21,12 +21,49 @@ model categoria {
 }
 
 model libro {
-  id           Int       @id @default(autoincrement())
-  titulo       String    @db.VarChar(200)
-  anio         Int
-  descripcion  String?   @db.VarChar(300)
-  autor_id     Int
-  categoria_id Int
-  autor        autor     @relation(fields: [autor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_autor_id")
-  categoria    categoria @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_categoria_id")
+  id              Int           @id @default(autoincrement())
+  titulo          String        @db.VarChar(200)
+  anio            Int
+  descripcion     String?       @db.Text
+  autor_id        Int
+  categoria_id    Int
+  tipo_lectura_id Int // CAMBIO: obligatorio (antes Int?)
+
+  // --- Seguimiento de lectura ---
+  estado         EstadoLectura @default(PENDIENTE) // CAMBIO: obligatorio (antes EstadoLectura?)
+  inicio_lectura DateTime?     @db.Date
+  fin_lectura    DateTime?     @db.Date
+  calificacion   Int? // 0 a 5
+  pagina_actual  Int? // libros FISICO y DIGITAL
+  segundo_actual Int? // AUDIOLIBRO
+  resena         String?       @db.Text
+  portada_url    String?       @db.VarChar(2048)
+
+  // --- Control ---
+  creado_en      DateTime @default(now()) @db.Timestamptz(3) // CAMBIO: obligatorio (antes DateTime?)
+  actualizado_en DateTime @default(now()) @updatedAt @db.Timestamptz(3) // CAMBIO: obligatorio, con valor inicial
+
+  autor        autor        @relation(fields: [autor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_autor_id")
+  categoria    categoria    @relation(fields: [categoria_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_categoria_id")
+  tipo_lectura tipo_lectura @relation(fields: [tipo_lectura_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tipo_lectura_id")
+
+  @@index([autor_id])
+  @@index([categoria_id])
+  @@index([tipo_lectura_id])
+}
+
+enum EstadoLectura {
+  PENDIENTE
+  EN_CURSO
+  TERMINADO
+  ABANDONADO
+}
+
+// Es un catalogo: se consulta, pero no se borra ni se cambia desde el crudo.
+
+model tipo_lectura {
+  id     Int @id @default(autoincrement())
+  codigo String @unique @db.VarChar(20)
+  nombre String @db.VarChar(50)
+  libro  libro[]
 }

@@ -1,6 +1,6 @@
 import { prisma } from "../../lib/prisma.js"
 import type { Prisma } from "../../../generated/prisma/client.js"
-import { ErrorDuplicado, ErrorNoEncontrado } from "../../utils/erroresPersonalizados.js"
+import { ErrorDuplicado, ErrorNoEncontrado, ErrorConflicto } from "../../utils/erroresPersonalizados.js"
 
 export type FiltrosAutores = {
     nombre?: string | undefined
@@ -32,10 +32,13 @@ export const obtenerTodosAutores = async (filtros: FiltrosAutores) => {
     const [autores, total] = await prisma.$transaction([
         prisma.autor.findMany({
             where,
-            orderBy: [{ [ordenarPor]: orden }, { nombre: "asc" }],
+            orderBy: [
+                { [ordenarPor]: orden },
+                { id: "asc" }
+            ],
             skip: (pagina - 1) * limite,
             take: limite,
-            include: {libro: true}
+            include: { libro: true }
         }),
         prisma.autor.count({ where }),
     ])
@@ -46,9 +49,13 @@ export const obtenerTodosAutores = async (filtros: FiltrosAutores) => {
 
 export const obtenerAutorPorId = async (id: number) => {
 
-    const autores = await prisma.autor.findMany({
+    const autores = await prisma.autor.findUnique({
         where: { id: id }
     })
+
+    if (!autores) {
+        throw new ErrorNoEncontrado("No se encontro autor con ese id.")
+    }
 
     return { data: autores }
 }
@@ -102,7 +109,7 @@ export const actualizarAutor = async (
 
     const existe = await obtenerAutorPorCoincidencia(nombre, detalles)
 
-    if (existe?.id !== id && id !== undefined) {
+    if (existe && existe.id !== id) {
         throw new ErrorDuplicado("Ya existe un autor con el mismo nombre y la misma descripcion.")
     }
 
@@ -124,6 +131,15 @@ export const eliminarAutor = async (id: number) => {
 
     if (autorAEliminar.data === null) {
         throw new ErrorNoEncontrado("No se encontró el autor que desea eliminar.")
+    }
+
+    //solo verifico que no tenga libros registrados a su nombre
+    // porque si lo borro asi, me llevo los libros entre las patas.
+
+    const libros = await prisma.libro.count({ where: { autor_id: id } })
+
+    if (libros > 0) {
+        throw new ErrorConflicto("No se puede eliminar autor poque tiene libros asociados.")
     }
 
     const autorEliminado = await prisma.autor.delete({
